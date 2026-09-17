@@ -1,24 +1,23 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/sqlite-proxy";
+import { executeSql, type SqlMethod } from "./sqlite-driver";
+import * as schema from "./schema";
 
-const databaseUrl = process.env.DATABASE_URL;
+/**
+ * Local-first database (plan §7, §45): SQLite on disk, no server to run.
+ * `drizzle-orm/sqlite-proxy` lets us drive Node's built-in `node:sqlite`
+ * synchronously behind drizzle's async API.
+ */
+export const db = drizzle(
+  async (sqlText: string, params: unknown[], method: SqlMethod) => {
+    try {
+      return executeSql(sqlText, params, method);
+    } catch (error) {
+      console.error("[sqlite] query failed", { sqlText, error });
+      throw error;
+    }
+  },
+  { schema },
+);
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const globalForDb = globalThis as typeof globalThis & {
-  __arenaNextJsPostgresqlPool?: Pool;
-};
-
-export const pool =
-  globalForDb.__arenaNextJsPostgresqlPool ??
-  new Pool({
-    connectionString: databaseUrl,
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__arenaNextJsPostgresqlPool = pool;
-}
-
-export const db = drizzle(pool);
+export { schema };
+export { databaseFile, getSqlite } from "./sqlite-driver";

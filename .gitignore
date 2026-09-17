@@ -1,0 +1,27 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+
+*.tsbuildinfo
+next-env.d.ts
+
+# Local SQLite database (local-first runtime state)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+.env
+.env.local
+.env*.local
+
+.DS_Store
+*.log
+
+# Monaco assets are copied from node_modules at install time
+public/monaco/
+.tmpcheck/

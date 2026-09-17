@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import vi from "@/locales/vi.json";
 import en from "@/locales/en.json";
 
@@ -10,9 +10,12 @@ const DICTS: Record<string, Dict> = { vi, en };
 
 export type Locale = "vi" | "en";
 
+/** Vietnamese is the default UI language — plan §3, rule #15. */
+export const DEFAULT_LOCALE: Locale = "vi";
+
 interface I18nContextValue {
   locale: Locale;
-  setLocale: (l: Locale) => void;
+  setLocale: (locale: Locale) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -28,28 +31,33 @@ function lookup(dict: Dict, key: string): unknown {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("vi");
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
-  const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("ide.locale", l);
+  // Read the saved locale after mount rather than during render: the server
+  // has no localStorage, so reading it eagerly would cause a hydration
+  // mismatch. Vietnamese renders first, then we switch if the user chose English.
+  useEffect(() => {
+    const stored = window.localStorage.getItem("ide.locale");
+    if (stored === "vi" || stored === "en") {
+      setLocaleState(stored);
+      document.documentElement.lang = stored;
     }
+  }, []);
+
+  const setLocale = useCallback((next: Locale) => {
+    setLocaleState(next);
+    window.localStorage.setItem("ide.locale", next);
+    document.documentElement.lang = next;
   }, []);
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      const dict = DICTS[locale] ?? DICTS.vi;
+      const dict = DICTS[locale] ?? DICTS[DEFAULT_LOCALE];
       let value = lookup(dict, key);
-      if (value === undefined) value = lookup(DICTS.vi, key);
+      if (value === undefined) value = lookup(DICTS[DEFAULT_LOCALE], key);
       if (typeof value !== "string") return key;
-      if (vars) {
-        return Object.entries(vars).reduce(
-          (acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)),
-          value,
-        );
-      }
-      return value;
+      if (!vars) return value;
+      return Object.entries(vars).reduce((acc, [name, val]) => acc.replaceAll(`{${name}}`, String(val)), value);
     },
     [locale],
   );
@@ -59,7 +67,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-export function useI18n() {
+export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error("useI18n must be used within I18nProvider");
   return ctx;

@@ -1,22 +1,40 @@
-import { db } from "@/db";
-import { sql } from "drizzle-orm";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect, useState } from "react";
+import { useWorkspaceStore, type WorkspaceInfo } from "@/stores/workspace-store";
+import { FirstRun } from "@/features/workspace/FirstRun";
+import { IdeShell } from "@/features/workspace/IdeShell";
+import { api } from "@/lib/api-client";
 
-export default async function HomePage() {
-  await db.execute(sql`select 1`);
+const LAST_WORKSPACE_KEY = "ide.lastWorkspaceId";
 
-  return (
-    <main className="grid min-h-screen place-items-center px-6 py-12">
-      <section className="w-full max-w-2xl rounded-3xl bg-white p-10 shadow-[0_24px_60px_rgba(16,24,40,0.12)]">
-        <p className="m-0 text-sm uppercase tracking-[0.08em] text-slate-600">Starter template</p>
-        <h1 className="mt-4 text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.05] text-slate-950">
-          Arena Next.js PostgreSQL Starter
-        </h1>
-        <p className="mt-4 text-base text-slate-700">
-          Server-rendered with Next.js after a successful PostgreSQL query through Drizzle.
-        </p>
-      </section>
-    </main>
-  );
+export default function HomePage() {
+  const workspace = useWorkspaceStore((s) => s.workspace);
+  const setWorkspace = useWorkspaceStore((s) => s.setWorkspace);
+  const [restoring, setRestoring] = useState(true);
+
+  // Reopen the last project so a reload drops you straight back into the IDE.
+  useEffect(() => {
+    const id = window.localStorage.getItem(LAST_WORKSPACE_KEY);
+    if (!id) {
+      setRestoring(false);
+      return;
+    }
+    api
+      .get<{ workspace: WorkspaceInfo }>(`/api/workspaces/${id}`)
+      .then((response) => setWorkspace(response.workspace))
+      .catch(() => window.localStorage.removeItem(LAST_WORKSPACE_KEY))
+      .finally(() => setRestoring(false));
+  }, [setWorkspace]);
+
+  useEffect(() => {
+    if (workspace) window.localStorage.setItem(LAST_WORKSPACE_KEY, workspace.id);
+    else window.localStorage.removeItem(LAST_WORKSPACE_KEY);
+  }, [workspace]);
+
+  if (restoring) {
+    return <main className="grid min-h-screen place-items-center text-sm text-slate-500">…</main>;
+  }
+
+  return workspace ? <IdeShell /> : <FirstRun />;
 }

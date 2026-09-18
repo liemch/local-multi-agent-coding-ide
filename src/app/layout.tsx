@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "@xterm/xterm/css/xterm.css";
 import { I18nProvider } from "@/lib/i18n";
 
 export const metadata: Metadata = {

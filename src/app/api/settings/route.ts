@@ -1,38 +1,35 @@
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { settings } from "@/db/schema";
+import { z } from "zod";
+import { getSettings, updateSettings } from "@/lib/orchestrator/settings";
+import { AGENT_IDS } from "@/lib/agents/types";
 
 export const dynamic = "force-dynamic";
 
-async function ensureSettings() {
-  const rows = await db.select().from(settings).where(eq(settings.id, "global"));
-  if (rows.length) return rows[0];
-  const [row] = await db.insert(settings).values({ id: "global" }).returning();
-  return row;
-}
+const agentIdSchema = z.enum(["codex", "claude", "antigravity"]);
+
+const patchSchema = z.object({
+  locale: z.enum(["vi", "en"]).optional(),
+  routingMode: z.enum(["manual", "priority", "smart"]).optional(),
+  agentPriority: z.array(agentIdSchema).optional(),
+  warningThreshold: z.number().int().min(1).max(100).optional(),
+  autoHandoff: z.boolean().optional(),
+  preemptiveHandoff: z.boolean().optional(),
+  simulateWhenMissing: z.boolean().optional(),
+  permissionMode: z.enum(["safe", "balanced", "auto"]).optional(),
+  autoCreateBranch: z.boolean().optional(),
+  alwaysAllowCommands: z.array(z.string()).optional(),
+});
 
 export async function GET() {
-  const row = await ensureSettings();
-  return Response.json({ settings: row });
+  const settings = await getSettings();
+  return Response.json({ settings, agentIds: AGENT_IDS });
 }
 
 export async function PUT(req: Request) {
-  await ensureSettings();
   const body = await req.json().catch(() => ({}));
-  const allowed = [
-    "routingMode",
-    "agentPriority",
-    "warningThreshold",
-    "autoHandoff",
-    "simulateWhenMissing",
-    "permissionMode",
-    "autoCreateBranch",
-    "locale",
-  ] as const;
-  const update: Record<string, unknown> = { updatedAt: new Date() };
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key];
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: "INVALID_BODY", details: parsed.error.issues }, { status: 400 });
   }
-  const [row] = await db.update(settings).set(update).where(eq(settings.id, "global")).returning();
-  return Response.json({ settings: row });
+  const settings = await updateSettings(parsed.data);
+  return Response.json({ settings });
 }

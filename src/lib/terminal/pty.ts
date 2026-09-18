@@ -38,7 +38,13 @@ type NodePtyModule = {
 
 function loadNodePty(): NodePtyModule | null {
   try {
-    const mod = require("node-pty") as NodePtyModule;
+    // `node-pty` is an OPTIONAL dependency: it needs a native toolchain, and the
+    // Python bridge below covers the case where it is absent. The specifier is
+    // assembled at runtime so bundlers (Turbopack/webpack) do not try to resolve
+    // it statically and emit a "Module not found" warning on every request.
+    const moduleName = ["node", "pty"].join("-");
+    const req = eval("require") as NodeRequire;
+    const mod = req(moduleName) as NodePtyModule;
     if (mod && typeof mod.spawn === "function") return mod;
     return null;
   } catch {

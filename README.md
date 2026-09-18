@@ -30,6 +30,19 @@ cần `DATABASE_URL`.
 | Python 3 | ⚠️ | Backend PTY dự phòng khi `node-pty` không build được |
 | Codex / Claude / Antigravity CLI | ❌ | Không có thì IDE chạy ở chế độ mô phỏng có nhãn rõ ràng |
 
+### Xử lý sự cố
+
+**Luôn chạy bằng `npm run dev`, không dùng `npx next dev`.** `npx` có thể tải
+một bản Next khác với bản trong `node_modules` và gây lỗi 500 ở trang chủ
+(`Can't resolve 'next/dist/server/app-render/...'`).
+
+| Triệu chứng | Nguyên nhân & cách xử lý |
+|---|---|
+| Trang chủ trả 500, log báo thiếu module nội bộ của Next | Đang chạy sai phiên bản Next. Dùng `npm run dev`. |
+| Editor trắng, không tải được Monaco | `public/monaco/` bị thiếu (thư mục này được gitignore). Chạy `node scripts/setup-monaco.mjs`. |
+| `ptyBackend` là `python` | Bình thường. `node-pty` là dependency tuỳ chọn; khi không build được native, bridge Python được dùng và terminal vẫn là PTY thật. |
+| Muốn làm lại từ đầu | Xoá `data/` (toàn bộ state) và `.next/` (cache build). Database sẽ tự tạo lại kèm migration. |
+
 ---
 
 ## Kiến trúc

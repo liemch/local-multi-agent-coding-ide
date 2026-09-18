@@ -7,19 +7,41 @@ hết hạn mức.
 
 ---
 
-## Cài đặt nhanh
+## Khởi động
 
 ```bash
-npm install
-npm run dev
+git clone <repo> && cd local-multi-agent-coding-ide
+npm install        # tự chép Monaco vào public/monaco (~24 MB)
+npm run dev        # mở http://localhost:3000
 ```
 
-Mở http://localhost:3000 — không cần Docker, không cần database server, không
-cần `DATABASE_URL`.
+Chỉ vậy. Không cần Docker, không cần database server, không cần file `.env`,
+không cần `DATABASE_URL`. Lần chạy đầu tiên `data/ide.db` sẽ tự được tạo và
+migration tự chạy.
 
-> `npm install` sẽ tự chạy `scripts/setup-monaco.mjs` để chép Monaco Editor vào
-> `public/monaco/` (khoảng 24 MB). Nhờ vậy trình soạn thảo chạy offline hoàn
-> toàn, không gọi CDN.
+Ở màn hình đầu tiên, chọn **"Dùng dự án mẫu"** để xem thử ngay, hoặc dán đường
+dẫn tuyệt đối tới một project có sẵn trên máy (ví dụ `/home/ban/code/my-app`).
+
+### Chạy ở chế độ production
+
+```bash
+npm run build
+npm start          # mặc định cổng 3000
+```
+
+### Đổi cổng / đổi vị trí database
+
+```bash
+npm run dev -- -p 4000                 # chạy ở cổng 4000
+IDE_DATABASE_FILE=/duong/dan/ide.db npm run dev
+```
+
+> **Lưu ý:** luôn dùng `npm run dev`, đừng chạy `npx next dev` — `npx` có thể
+> tải một bản Next khác với bản trong `node_modules` và làm trang chủ trả lỗi 500.
+>
+> Next chỉ cho phép **một dev server trên mỗi thư mục dự án**. Nếu đổi cổng mà
+> báo `Another next dev server is already running`, hãy tắt tiến trình cũ trước
+> (log sẽ in sẵn `kill <PID>`).
 
 ### Yêu cầu
 

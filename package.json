@@ -1,16 +1,18 @@
 {
-  "name": "local-multi-agent-dev-ide",
-  "private": true,
-  "version": "1.0.0",
+  "name": "@liemch/local-agent-ide",
+  "version": "1.1.0-beta.1",
   "scripts": {
-    "postinstall": "node scripts/setup-monaco.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package:prepare": "node scripts/prepare-package.mjs",
+    "package:check": "node scripts/check-package.mjs",
+    "pack:local": "npm run package:prepare && npm run package:check && npm pack",
+    "prepublishOnly": "npm run test && npm run typecheck && npm run lint && npm run package:prepare && npm run package:check"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -20,7 +22,7 @@
     "chokidar": "^5.0.0",
     "drizzle-orm": "0.45.2",
     "monaco-editor": "^0.56.0",
-    "next": "16.2.6",
+    "next": "16.3.5",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "zod": "^4.6.5",
@@ -35,10 +37,41 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.5",
     "postcss": "8.5.8",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
     "vitest": "^3.2.4"
-  }
+  },
+  "description": "Local-first IDE for orchestrating multiple AI coding agent CLIs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liemch/local-multi-agent-coding-ide.git"
+  },
+  "homepage": "https://github.com/liemch/local-multi-agent-coding-ide#readme",
+  "bugs": {
+    "url": "https://github.com/liemch/local-multi-agent-coding-ide/issues"
+  },
+  "keywords": [
+    "ide",
+    "ai",
+    "coding-agent",
+    "local-first",
+    "codex",
+    "claude"
+  ],
+  "bin": {
+    "local-agent-ide": "bin/local-agent-ide.mjs"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "scripts/pty_bridge.py",
+    "README.md",
+    "LICENSE"
+  ]
 }

@@ -9,8 +9,10 @@ export async function GET() {
     const row = database.prepare("select 1 as ok").get() as { ok: number };
     return Response.json({
       ok: row.ok === 1,
-      database: databaseFile(),
+      version: process.env.LOCAL_AGENT_IDE_VERSION ?? "development",
+      database: { ok: row.ok === 1, ...(process.env.LOCAL_AGENT_IDE_DEBUG === "1" ? { path: databaseFile() } : {}) },
       ptyBackend: ptyBackend(),
+      platform: process.platform,
     });
   } catch (error) {
     return Response.json(

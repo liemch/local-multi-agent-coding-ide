@@ -1,4 +1,5 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 
 /**
@@ -52,15 +53,29 @@ function loadNodePty(): NodePtyModule | null {
   }
 }
 
-export function detectBackend(): PtyBackend {
-  if (cachedBackend) return cachedBackend;
-  cachedBackend = loadNodePty() ? "node-pty" : "python";
-  return cachedBackend;
-}
-
 /** Path to the Python PTY bridge script shipped with the runtime. */
 function bridgeScript(): string {
-  return path.join(process.cwd(), "scripts", "pty_bridge.py");
+  const runtimeRoot = process.env.LOCAL_AGENT_IDE_PACKAGE_ROOT
+    ? path.join(process.env.LOCAL_AGENT_IDE_PACKAGE_ROOT, "dist", "server")
+    : process.cwd();
+  return path.join(runtimeRoot, "scripts", "pty_bridge.py");
+}
+
+function hasPythonPty(): boolean {
+  if (process.platform === "win32" || !fs.existsSync(bridgeScript())) return false;
+  const check = spawnSync("python3", ["-c", "import pty"], { stdio: "ignore", timeout: 3000 });
+  return !check.error && check.status === 0;
+}
+
+export function detectBackend(): PtyBackend {
+  if (cachedBackend) return cachedBackend;
+  if (loadNodePty()) return (cachedBackend = "node-pty");
+  if (hasPythonPty()) return (cachedBackend = "python");
+  throw new Error(
+    process.platform === "win32"
+      ? "No PTY backend is available. Install the optional node-pty package to use Windows ConPTY."
+      : "No PTY backend is available. Install node-pty or Python 3 with the pty module.",
+  );
 }
 
 /**
@@ -162,5 +177,8 @@ export function spawnPty(options: SpawnPtyOptions): { pty: PtyProcess; backend: 
     return { pty, backend: "node-pty" };
   }
 
+  // Validate Python and the bridge before spawning so callers fail immediately
+  // instead of creating a session that eventually times out.
+  if (detectBackend() !== "python") throw new Error("No PTY backend is available");
   return { pty: new PythonPty(options), backend: "python" };
 }

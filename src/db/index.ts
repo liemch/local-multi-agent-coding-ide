@@ -20,4 +20,4 @@ export const db = drizzle(
 );
 
 export { schema };
-export { databaseFile, getSqlite } from "./sqlite-driver";
+export { closeSqlite, databaseFile, getSqlite } from "./sqlite-driver";

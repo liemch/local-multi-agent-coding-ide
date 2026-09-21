@@ -38,7 +38,7 @@ export function isProtectedPath(target: string): boolean {
   const normalized = path.resolve(target);
   const home = os.homedir();
 
-  const exact = protectedPaths().map((p) => path.resolve(p));
+  const exact = protectedPaths().map((p) => path.resolve(/* turbopackIgnore: true */ p));
   if (exact.includes(normalized)) return true;
 
   // Anything *inside* these is protected too — `/usr` alone is not enough,
@@ -58,7 +58,7 @@ export function isProtectedPath(target: string): boolean {
     "/bin",
     "/sbin",
     "/var",
-  ].map((p) => path.resolve(p));
+  ].map((p) => path.resolve(/* turbopackIgnore: true */ p));
 
   return sensitiveRoots.some((root) => {
     const relative = path.relative(root, normalized);

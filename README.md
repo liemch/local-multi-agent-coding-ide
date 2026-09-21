@@ -7,17 +7,44 @@ hết hạn mức.
 
 ---
 
-## Khởi động
+## Cài đặt package
+
+Yêu cầu Node.js **>= 22.5**. Cài global hoặc chạy trực tiếp:
+
+```bash
+npm install -g @liemch/local-agent-ide
+local-agent-ide
+# hoặc
+npx @liemch/local-agent-ide
+```
+
+CLI mặc định chỉ bind `127.0.0.1`, chọn cổng từ 3000 và mở trình duyệt. Các tùy
+chọn: `--port`, `--host`, `--data-dir`, `--no-open`, `--help`, `--version`.
+Biến môi trường tương ứng có tiền tố `LOCAL_AGENT_IDE_`.
+
+Dữ liệu không nằm trong package: Windows dùng
+`%LOCALAPPDATA%\\local-agent-ide`, macOS dùng
+`~/Library/Application Support/local-agent-ide`, Linux dùng
+`${XDG_DATA_HOME:-~/.local/share}/local-agent-ide`. Hãy sao lưu toàn bộ thư mục
+này khi IDE đã dừng. Khôi phục bằng cách chép lại thư mục. `npm update -g
+@liemch/local-agent-ide` không xóa dữ liệu; `npm uninstall -g` cũng giữ dữ liệu
+để người dùng chủ động xóa.
+
+Terminal ưu tiên `node-pty`/ConPTY; trên macOS và Linux có thể dùng Python 3 làm
+PTY dự phòng. Nếu không có backend thật, terminal báo lỗi thay vì giả lập.
+
+## Chạy từ mã nguồn (contributor)
 
 ```bash
 git clone <repo> && cd local-multi-agent-coding-ide
-npm install        # tự chép Monaco vào public/monaco (~24 MB)
+npm install
+node scripts/setup-monaco.mjs
 npm run dev        # mở http://localhost:3000
 ```
 
-Chỉ vậy. Không cần Docker, không cần database server, không cần file `.env`,
-không cần `DATABASE_URL`. Lần chạy đầu tiên `data/ide.db` sẽ tự được tạo và
-migration tự chạy.
+Không cần Docker, database server, `.env` hay `DATABASE_URL`. Database được tạo
+trong thư mục dữ liệu người dùng; có thể đặt `LOCAL_AGENT_IDE_DATA_DIR` để cô
+lập dữ liệu khi phát triển.
 
 Ở màn hình đầu tiên, chọn **"Dùng dự án mẫu"** để xem thử ngay, hoặc dán đường
 dẫn tuyệt đối tới một project có sẵn trên máy (ví dụ `/home/ban/code/my-app`).
@@ -197,4 +224,5 @@ UI nằm trong `src/locales/{vi,en}.json` — test sẽ fail nếu có khoá b�
 | `data/ide.db` | SQLite: workspace, task, agent, account, event, checkpoint, settings |
 | `<workspace>/.agent-manager/tasks/TASK-xxx/` | Context dùng chung + checkpoint |
 
-Đổi vị trí database bằng biến môi trường `IDE_DATABASE_FILE`.
+Đổi thư mục dữ liệu bằng `LOCAL_AGENT_IDE_DATA_DIR`. Biến cũ
+`IDE_DATABASE_FILE` vẫn được hỗ trợ trong chu kỳ tương thích hiện tại.

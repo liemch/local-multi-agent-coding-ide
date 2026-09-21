@@ -2,7 +2,7 @@
 /**
  * Copies the Monaco editor assets into `public/monaco` so the IDE loads the
  * editor from localhost instead of a CDN (local-first requirement, plan §1).
- * Runs automatically after `npm install`.
+ * Runs during package preparation (and manually for source development).
  */
 import fs from "node:fs";
 import path from "node:path";

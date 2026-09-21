@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { ensureAppDataDirectories } from "@/lib/app-data";
 
 /**
  * Real SQLite, backed by Node's built-in `node:sqlite` (Node >= 22.5).
@@ -15,8 +16,17 @@ const globalStore = globalThis as typeof globalThis & {
 };
 
 export function databaseFile(): string {
+  // Kept for one compatibility cycle. The package-level data directory takes
+  // precedence so the CLI can always keep runtime state outside node_modules.
+  if (process.env.LOCAL_AGENT_IDE_DATA_DIR) return ensureAppDataDirectories().database;
   if (process.env.IDE_DATABASE_FILE) return path.resolve(process.env.IDE_DATABASE_FILE);
-  return path.resolve(process.cwd(), "data", "ide.db");
+  return ensureAppDataDirectories().database;
+}
+
+export function closeSqlite(): void {
+  if (!globalStore.__ideSqlite) return;
+  globalStore.__ideSqlite.close();
+  delete globalStore.__ideSqlite;
 }
 
 export function getSqlite(): DatabaseSync {

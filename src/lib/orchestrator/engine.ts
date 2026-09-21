@@ -259,7 +259,7 @@ async function runProjectTests(root: string): Promise<{ ok: boolean; output: str
 
   return new Promise((resolve) => {
     execFile(
-      testCommand.cmd,
+      /* turbopackIgnore: true */ testCommand.cmd,
       testCommand.args,
       { cwd: root, timeout: 120_000, maxBuffer: 1024 * 1024 * 8 },
       (error, stdout, stderr) => {

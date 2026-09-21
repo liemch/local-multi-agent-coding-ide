@@ -14,7 +14,10 @@ beforeAll(() => {
   process.env.IDE_DATABASE_FILE = path.join(tmpDir, "test.db");
 });
 
-afterAll(() => {
+afterAll(async () => {
+  const { closeSqlite } = await import("@/db/sqlite-driver");
+  closeSqlite();
+  delete process.env.IDE_DATABASE_FILE;
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 

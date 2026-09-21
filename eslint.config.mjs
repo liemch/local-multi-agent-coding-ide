@@ -8,9 +8,10 @@ export default defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
     "next-env.d.ts",
-    // Monaco is vendored into public/ by scripts/setup-monaco.mjs at install
-    // time. It is third-party minified output, not our source.
+    // Monaco is vendored into public/ during package preparation. It is
+    // third-party minified output, not our source.
     "public/monaco/**",
   ]),
   {
